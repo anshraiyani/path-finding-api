@@ -1,18 +1,21 @@
 import mongoose, { Schema } from "mongoose";
 
-const LocationSchema = new Schema({
-    name: {
-        type: String,
-        required: true,
+const LocationSchema = new Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+        },
+        latitude: {
+            type: Number,
+            required: true,
+        },
+        longitude: {
+            type: Number,
+            required: true,
+        },
     },
-    latitude: {
-        type: Number,
-        required: true,
-    },
-    longitude: {
-        type: Number,
-        required: true,
-    },
-});
+    { timestamps: true }
+);
 
 export const Location = mongoose.model("Location", LocationSchema);
