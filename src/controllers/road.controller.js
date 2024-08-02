@@ -1,4 +1,3 @@
-import { Location } from "../models/location.models.js";
 import { Road } from "../models/road.models.js";
 import { TrafficUpdates } from "../models/trafficUpdates.models.js";
 import { findShortestPath } from "../utils/shortestPath.js";
@@ -138,14 +137,45 @@ const updateTrafficCondition = async (req, res) => {
 };
 
 const getShortestPath = async (req, res) => {
-    const { start_location_id, end_location_id } = req.query;
-    const shortestPath = await findShortestPath(
-        start_location_id,
-        end_location_id
-    );
-    let time = 0;
-    let distance = 0;
-    console.log(shortestPath);
+    try {
+        const { start_location_id, end_location_id } = req.query;
+        const shortestPath = await findShortestPath(
+            start_location_id,
+            end_location_id
+        );
+        let time = 0;
+        let distance = 0;
+        let a = shortestPath[0];
+        let b = shortestPath[1];
+        let i = 1;
+        while (i < shortestPath.length) {
+            const road = await Road.findOne({
+                start_location_id: a,
+                end_location_id: b,
+            });
+            distance += road.distance;
+            time += road.distance * road.traffic_condition;
+            a = shortestPath[i];
+            b = shortestPath[i + 1];
+            i++;
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "path found successfully.",
+            data: {
+                path: shortestPath,
+                total_distance: distance,
+                estimated_time: time,
+            },
+        });
+    } catch (error) {
+        console.log("error finding path : ", error);
+        return res.status(500).json({
+            success: false,
+            message: "internal server error",
+        });
+    }
 };
 
 const getTrafficCondition = async (req, res) => {
