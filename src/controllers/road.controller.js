@@ -1,4 +1,7 @@
+import { Location } from "../models/location.models.js";
 import { Road } from "../models/road.models.js";
+import { TrafficUpdates } from "../models/trafficUpdates.models.js";
+import { findShortestPath } from "../utils/shortestPath.js";
 
 const addRoad = async (req, res) => {
     try {
@@ -51,6 +54,12 @@ const addRoad = async (req, res) => {
             end_location_id,
             distance,
             traffic_condition: numbered_traffic_condition,
+        });
+
+        const newTrafficUpdate = await TrafficUpdates.create({
+            road_id: newRoad._id,
+            timestamp: newRoad.createdAt,
+            traffic_condition: traffic_condition,
         });
 
         return res.status(201).json({
@@ -115,16 +124,69 @@ const updateTrafficCondition = async (req, res) => {
 
     await existingRoad.save();
 
+    const updatedTraffic = await TrafficUpdates.create({
+        road_id,
+        timestamp,
+        traffic_condition,
+    });
+
     return res.status(201).json({
         success: true,
         message: "traffic conditions updated successfully",
-        data: existingRoad,
+        data: updatedTraffic,
     });
 };
 
 const getShortestPath = async (req, res) => {
     const { start_location_id, end_location_id } = req.query;
-    
+    const shortestPath = await findShortestPath(
+        start_location_id,
+        end_location_id
+    );
+    let time = 0;
+    let distance = 0;
+    console.log(shortestPath);
 };
 
-export { addRoad, updateTrafficCondition };
+const getTrafficCondition = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                message: "id not provided in params",
+            });
+        }
+
+        const existingRoad = await Road.findById({ _id: id });
+
+        if (!existingRoad) {
+            return res.status(404).json({
+                success: false,
+                message: "road not found",
+            });
+        }
+
+        const trafficConditions = await TrafficUpdates.find({ road_id: id });
+
+        return res.status(200).json({
+            success: true,
+            message: "traffic conditions fetched successfully.",
+            data: trafficConditions,
+        });
+    } catch (error) {
+        console.log("error fetching conditions : ", error);
+        return res.status(500).json({
+            success: false,
+            message: "internal server error",
+        });
+    }
+};
+
+export {
+    addRoad,
+    updateTrafficCondition,
+    getShortestPath,
+    getTrafficCondition,
+};

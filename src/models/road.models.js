@@ -25,4 +25,8 @@ const RoadSchema = new Schema(
     { timestamps: true }
 );
 
+RoadSchema.methods.calculateTime = function() {
+    return this.distance * this.traffic_condition;
+};
+
 export const Road = mongoose.model("Road", RoadSchema);
